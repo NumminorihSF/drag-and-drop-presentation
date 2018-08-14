@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>5. Add data-transfer</title>
+	<style>
+		/* Prevent the text contents of draggable elements from being selectable. */
+		[draggable="true"] {
+			-moz-user-select: none;
+			-khtml-user-select: none;
+			-webkit-user-select: none;
+			user-select: none;
+			/* Required to make elements draggable in old WebKit */
+			-khtml-user-drag: element;
+			-webkit-user-drag: element;
+		}
+		.column {
+			height: 150px;
+			width: 150px;
+			float: left;
+			border: 2px solid #666666;
+			background-color: #ccc;
+			margin-right: 5px;
+			-webkit-border-radius: 10px;
+			-ms-border-radius: 10px;
+			-moz-border-radius: 10px;
+			border-radius: 10px;
+			-webkit-box-shadow: inset 0 0 3px #000;
+			-ms-box-shadow: inset 0 0 3px #000;
+			box-shadow: inset 0 0 3px #000;
+			text-align: center;
+			cursor: move;
+		}
+		.column header {
+			color: #fff;
+			text-shadow: #000 0 1px;
+			box-shadow: 5px;
+			padding: 5px;
+			background: -moz-linear-gradient(left center, rgb(0,0,0), rgb(79,79,79), rgb(21,21,21));
+			background: -webkit-gradient(linear, left top, right top,
+			color-stop(0, rgb(0,0,0)),
+			color-stop(0.50, rgb(79,79,79)),
+			color-stop(1, rgb(21,21,21)));
+			background: -webkit-linear-gradient(left center, rgb(0,0,0), rgb(79,79,79), rgb(21,21,21));
+			background: -ms-linear-gradient(left center, rgb(0,0,0), rgb(79,79,79), rgb(21,21,21));
+			border-bottom: 1px solid #ddd;
+			-webkit-border-top-left-radius: 10px;
+			-moz-border-radius-topleft: 10px;
+			-ms-border-radius-topleft: 10px;
+			border-top-left-radius: 10px;
+			-webkit-border-top-right-radius: 10px;
+			-ms-border-top-right-radius: 10px;
+			-moz-border-radius-topright: 10px;
+			border-top-right-radius: 10px;
+		}
+		.column.over {
+			border: 2px dashed #000;
+		}
+		#columns::after {
+			content: "";
+			display: table;
+			clear: both;
+		}
+	</style>
+	<script src="script-button.js" defer></script>
+	<script src="logger.js" defer></script>
+</head>
+<body>
+
+<div id="columns">
+	<div class="column" draggable="true"><header>A</header></div>
+	<div class="column" draggable="true"><header><a href="/">B</a></header></div>
+	<div class="column" draggable="true"><header>C</header></div>
+</div>
+
+</body>
+<script>
+	try {
+		const button = document.createElement('button');
+		button.innerText = 'my preview';
+
+		let draggedElement = null;
+
+		function handleDragStart(event) {
+			event.dataTransfer.effectAllowed = 'move';
+			event.dataTransfer.setData('text/html', this.innerHTML);
+
+			event.dataTransfer.addElement(button);
+
+			draggedElement = this;
+
+			this.style.opacity = '0.4';
+		}
+
+		function handleDragOver(event) {
+			event.preventDefault();
+
+			event.dataTransfer.dropEffect = 'move';
+		}
+
+		function handleDragEnter() {
+			this.classList.add('over');
+		}
+
+		function handleDragLeave() {
+			this.classList.remove('over');
+		}
+
+		function handleDrop(e) {
+			e.stopPropagation();
+
+			if (draggedElement !== this) {
+				draggedElement.innerHTML = this.innerHTML;
+				this.innerHTML = e.dataTransfer.getData('text/html');
+			}
+		}
+
+		function handleDragEnd(e) {
+			this.style.opacity = '1';
+			[...document.querySelectorAll('#columns .column')].forEach(function (col) {
+				col.classList.remove('over');
+			});
+		}
+
+		const cols = [...document.querySelectorAll('#columns .column')];
+
+		cols.forEach(function (col) {
+			col.setAttribute('draggable', 'true');
+			col.addEventListener('dragstart', handleDragStart, false);
+			col.addEventListener('dragenter', handleDragEnter, false);
+			col.addEventListener('dragover', handleDragOver, false);
+			col.addEventListener('dragleave', handleDragLeave, false);
+			col.addEventListener('drop', handleDrop, false);
+			col.addEventListener('dragend', handleDragEnd, false);
+		});
+	} catch(e) {
+		alert(e);
+	}
+</script>
+</html>
+
+

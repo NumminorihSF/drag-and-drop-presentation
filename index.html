@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Drag and Drop</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="shower/themes/ribbon/styles/styles.css">
+	<style>
+		.shower {
+			--slide-ratio: calc(16 / 9);
+		}
+	</style>
+</head>
+<body class="shower list">
+
+<header class="caption">
+	<h1>Drag and Drop</h1>
+</header>
+
+<section class="slide" id="cover">
+	<h2>Drag and Drop</h2>
+	<p>Brought to you by <a href="https://github.com/NumminorihSF">Konstantin Petryaev</a></p>
+	<style>
+		#cover h2 {
+			margin: 30px 0 0;
+			text-align: center;
+			font-size: 70px;
+		}
+
+		#cover p {
+			margin: 10px 0 0;
+			text-align: center;
+			font-style: italic;
+			font-size: 20px;
+		}
+	</style>
+</section>
+
+<section class="slide">
+	<h2>What is drag and drop</h2>
+	<p>
+		The phrase drag-and-drop is used to describe the action of selecting an object or section
+		of text, moving it (dragging), and then placing it (dropping) into an alternate area.
+	</p>
+	<div style="display:flex; height: 40%">
+		<video style="width: 40%; margin-left: auto; margin-right: auto" controls src="videos/drag-and-drop-in-os.mkv"></video>
+	</div>
+</section>
+
+<section class="slide">
+	<h2>What is drag and drop in web</h2>
+	<ul>
+		<li>Two specs:<ul>
+			<li>W3C</li>
+			<li>WHATWG</li>
+		</ul></li>
+		<li>Different implementations in browsers</li>
+	</ul>
+</section>
+
+<section class="slide">
+	<h2>The [draggable] attribute</h2>
+	<ul>
+		<li>Three possible states: <code>true</code> , <code>false</code> and <code>auto</code> (by default).</li>
+		<li><q>The true state means the element is draggable; the false state means that it is not. The auto state uses the default behavior of the user agent.</q></li>
+		<li><code>auto</code> means <code>true</code> in case of <code>&lt;img /&gt;</code> or <code>&lt;a href/&gt;</code></li>
+	</ul>
+</section>
+
+<section class="slide">
+	<h2>The [draggable] attribute</h2>
+	<p>But <code>draggable="true"</code> is not enough to make your element draggable in most cases in real.</p>
+	<iframe src="data:text/html,<button draggable='true'>Button with draggable='true'</button>"></iframe>
+</section>
+
+<section class="slide">
+	<h2>Plain markup with [draggable]</h2>
+	<pre>
+			<code>&lt;div id="columns"&gt;</code>
+			<code>  &lt;div class="column" draggable="true"&gt;&lt;header&gt;A&lt;/header&gt;</code>
+			<code>    &lt;/div&gt;</code>
+  			<code>  &lt;div class="column" draggable="true"&gt;&lt;header&gt;B&lt;/header&gt;</code>
+  			<code>    &lt;/div&gt;</code>
+			<code>  &lt;div class="column" draggable="true"&gt;&lt;header&gt;C&lt;/header&gt;</code>
+			<code>    &lt;/div&gt;</code>
+			<code>&lt;/div&gt;</code>
+		</pre>
+</section>
+
+<section class="slide">
+	<h2>Plain markup with [draggable] result</h2>
+	<a target="_blank" href="frames/1-plain-markup.html">In new tab</a>
+	<iframe boder="1px" width="100%" height="60%" src="frames/1-plain-markup.html"></iframe>
+</section>
+
+<section class="slide">
+	<h2>Plain markup total</h2>
+	<ul>
+		<li>Does not work in firefox (<code>dragstart</code> without anything)</li>
+		<li>Does not work on Android (<code>dragstart</code> without anything)</li>
+		<li>Does not work on iOS (<code>dragend</code> after <code>dragstart</code>)</li>
+	</ul>
+</section>
+
+<section class="slide">
+	<h2>It's not only HTML</h2>
+	<blockquote>To make an element draggable is simple: give the element a <code>draggable</code> attribute,
+		and set an event listener for <code>dragstart</code> that stores the data being dragged.
+		The event handler typically needs to check that it's not a text selection that is being dragged,
+		and then needs to store data into the <code>DataTransfer</code> object and set the allowed effects
+		(copy, move, link, or some combination).
+	</blockquote>
+	</ul>
+</section>
+
+<section class="slide">
+	<h2>DataTransfer?</h2>
+	In order to spec every drag event implements next interface:
+	<pre>
+		<code>interface DragEvent : MouseEvent {</code>
+		<code>  readonly attribute DataTransfer dataTransfer;</code>
+		<code> </code>
+		<code>  void initDragEvent(in DOMString typeArg, in boolean canBubbleArg, in boolean cancelableArg, in any dummyArg, in long detailArg, in long screenXArg, in long screenYArg, in long clientXArg, in long clientYArg, in boolean ctrlKeyArg, in boolean altKeyArg, in boolean shiftKeyArg, in boolean metaKeyArg, in unsigned short buttonArg, in EventTarget relatedTargetArg, in DataTransfer dataTransferArg);</code>
+        <code>};</code>
+	</pre>
+</section>
+
+<section class="slide">
+	<pre>
+	    <code>       attribute DOMString dropEffect;</code>
+		<code>       attribute DOMString effectAllowed;</code>
+		<code>readonly attribute DOMStringList types;</code>
+		<code>void clearData(in optional DOMString format);</code>
+		<code>void setData(in DOMString format, in DOMString data);</code>
+		<code>vDOMString getData(in DOMString format);</code>
+		<code>readonly attribute FileList files;</code>
+		<code>void setDragImage(in Element image, in long x, in long y);</code>
+		<code>void addElement(in Element element);</code>
+	</pre>
+</section>
+
+<section class="slide">
+	<h2>Lets add <code>dragstart</code></h2>
+	<pre>
+		<code>function handleDragStart(event) {</code>
+    	<code>  event.dataTransfer.effectAllowed = 'move';</code>
+    	<code>  event.dataTransfer.setData('text/html', 'blah');</code>
+		<code> </code>
+    	<code>  this.style.opacity = '0.4'; // not required</code>
+		<code>}</code>
+	</pre>
+</section>
+
+<section class="slide">
+	<h2><code>effectAllowed</code></h2>
+	<ul>
+		<li>none</li>
+		<li>copy</li>
+		<li>link</li>
+		<li>move</li>
+		<li>all</li>
+		<li>copyMove, copyLink, linkMove</li>
+		<li>uninitialized</li>
+	</ul>
+</section>
+
+<section class="slide">
+	<h2>DataTransfer's data</h2>
+	<ul>
+		<li><code>setData(type, data)</code></li>
+		<li><code>getData(type)</code></li>
+		<li><code>clearData(type)</code></li>
+		<li><code>type</code> is MIME type string usually</li>
+		<li>All formats are identified by strings that are converted to ASCII lowercase by the API</li>
+		<li><code>data</code> is serialized data we need to store</li>
+	</ul>
+</section>
+
+<section class="slide">
+	<h2>Result</h2>
+	<a target="_blank" href="frames/3-add-drag-start.html">In new tab</a>
+	<iframe boder="1px" width="100%" height="60%" src="frames/3-add-drag-start.html"></iframe>
+</section>
+
+<section class="slide">
+	<h2>Total</h2>
+	<ul>
+		<li>Works in firefox</li>
+		<li>Works on Android</li>
+		<li>Works on iOS</li>
+		<li class="next">But we can't "drop"</li>
+	</ul>
+</section>
+
+<section class="slide">
+	<h2>How can we drop</h2>
+	<blockquote>To accept a drop, the drop target has to listen to at least three events. First, the dragenter event, which is used to determine whether or not the drop target is to accept the drop. If the drop is to be accepted, then this event has to be canceled. Second, the dragover event, which is used to determine what feedback is to be shown to the user. If the event is canceled, then the feedback (typically the cursor) is updated based on the dropEffect attribute's value, as set by the event handler; otherwise, the default behavior (typically to do nothing) is used instead. Finally, the drop event, which allows the actual drop to be performed. This event also needs to be canceled, so that the dropEffect attribute's value can be used by the source (otherwise it's reset).</blockquote>
+</section>
+
+<section class="slide">
+	<h2>So to drop anything we need</h2>
+	<ul>
+		<li>Call <code>event.preventDefault()</code> for <code>dragenter</code>. <span class="comment">Works without this in real.</span></li>
+		<li>Call <code>event.preventDefault()</code> for <code>dragover</code>. Browser use <code>dropEffect</code> to show the feedback to a user.</li>
+		<li>Call <code>event.preventDefault()</code> for <code>drop</code>.</li>
+	</ul>
+</section>
+
+<section class="slide">
+	<h2>What is <code>dropEffect</code></h2>
+	<p>Returns the kind of operation that is currently selected. If the kind of operation isn't one of those
+		that is allowed by the effectAllowed attribute, then the operation will fail.</p>
+	<p>Can be set, to change the selected operation.</p>
+	<p>The possible values are <code>none</code>, <code>copy</code>, <code>link</code>, and <code>move</code>.</p>
+</section>
+
+<section class="slide">
+	<h2>Handle <code>dragover</code></h2>
+	<pre>
+		<code>function handleDragOver(event) {</code>
+		<code>  event.preventDefault(); // Necessary. Allows us to drop.</code>
+        <code> </code>
+        <code>  event.dataTransfer.dropEffect = 'move';</code>
+		<code>}</code>
+	</pre>
+</section>
+
+<section class="slide">
+	<h2>Handle <code>drop</code></h2>
+	<pre>
+		<code>function handleDrop(event) {</code>
+        <code>  event.stopPropagation();</code>
+		<code>  event.dataTransfer.getData('text/html');</code>
+        <code>}</code>
+	</pre>
+</section>
+
+<section class="slide">
+	<h2>Droppable</h2>
+	<a target="_blank" href="frames/5-add-data-transfer.html">In new tab</a>
+	<iframe boder="1px" width="100%" height="60%" src="frames/5-add-data-transfer.html"></iframe>
+</section>
+
+<section class="slide">
+	<h2>Custom drag image</h2>
+
+	<p><code>setDragImage(element, x, y)</code></p>
+	<pre>
+		<code>const image = new Image();</code>
+  	    <code>image.src = "https://images.unsplash.com/photo-1533522688752-ef641aa0607b?ixlib=rb-0.3.5&ixid=eyJhcHBfaWQiOjEyMDd9&s=513fe98e949e7a4024d1400f5733c05e&auto=format&fit=crop&w=400&q=80";</code>
+        <code> </code>
+		<code>function handleDragStart(event) {</code>
+		<code>  // ... </code>
+		<code>  event.dataTransfer.setDragImage(image, 200, 100);</code>
+		<code>}</code>
+	</pre>
+</section>
+
+<section class="slide">
+	<h2>Custom drag image example</h2>
+	<a target="_blank" href="frames/5.1-preview.html">In new tab</a>
+	<iframe frameboder="1px" width="100%" height="60%" src="frames/5.1-preview.html"></iframe>
+</section>
+
+<section class="slide">
+	<h2>Custom drag element</h2>
+
+	<p><code>addElement(element)</code></p>
+	<pre>
+		<code>const button = document.createElement('button');</code>
+		<code>button.innerText = 'my-preview';</code>
+        <code> </code>
+		<code>function handleDragStart(event) {</code>
+		<code>  // ... </code>
+		<code>  event.dataTransfer.addElement(element);</code>
+		<code>}</code>
+	</pre>
+</section>
+
+<section class="slide">
+	<h2>Custom drag element example</h2>
+	<a target="_blank" href="frames/5.2-element.html">In new tab</a>
+	<iframe frameboder="1px" width="100%" height="60%" src="frames/5.2-element.html"></iframe>
+</section>
+
+<section class="slide">
+	<h2>Does not work</h2>
+	<ul>
+		<li>Chrome does not implement this API.</li>
+		<li>Element should present DOM.</li>
+		<li>Element use original position with offsets.</li>
+		<li>Does not add but sets the element in real.</li>
+	</ul>
+</section>
+
+<section class="slide">
+	<h2>Custom drag element example</h2>
+	<a target="_blank" href="frames/5.3-element.html">In new tab</a>
+	<iframe frameboder="1px" width="100%" height="60%" src="frames/5.3-element.html"></iframe>
+</section>
+
+<section class="slide">
+	<h2 class="shout">Any question?</h2>
+</section>
+
+
+<section class="slide">
+	<h2>React and D&amp;D</h2>
+	<p>We just use react's event listeners instead of <code>HTMLElement#addEventListener()</code>.</p>
+</section>
+
+<section class="slide">
+	<h2>Card component</h2>
+	<pre>
+		<code>class Card extends React.Component {</code>
+	    <code>  state = { isOvered: false, isDragging: false };</code>
+		<code>  // many handlers</code>
+		<code>  render() {</code>
+		<code>    return (&lt;div draggable="true" className={className}</code>
+		<code>      onDragStart={} onDragEnd={}</code>
+		<code>      onDragEnter={} onDragOver={}</code>
+		<code>      onDragLeave={} onDrop={}&gt;{content}&lt;/div&gt;)</code>
+	</pre>
+</section>
+
+<section class="slide">
+	<h2>Native drag and drop via react example</h2>
+	<a target="_blank" href="frames/7-plain-react.html">In new tab</a>
+	<iframe frameboder="1px" width="100%" height="60%" src="frames/7-plain-react.html"></iframe>
+</section>
+
+<section class="slide">
+	<h2>React-DnD</h2>
+	<p>React-DnD adds some abstractions for comfort development. Main abstractions are:</p>
+	<ul>
+		<li>DragSource</li>
+		<li>DropTarget</li>
+		<li>DragLayer</li>
+		<li>Backend - It's just a module that map real DOM events to internal React-DnD events.</li>
+	</ul>
+</section>
+
+<section class="slide">
+	<h2>Card component</h2>
+	<pre>
+		<code>class Card extends React.Component {</code>
+		<code>render() {</code>
+		<code>  const {children, connectDropTarget, connectDragSource} = this.props;</code>
+		<code>  return connectDragSource(</code>
+		<code>    connectDropTarget(</code>
+		<code>      &lt;div className="column"&gt;{content}&lt;/div&gt;</code>
+		<code>    )</code>
+		<code>  );</code>
+		<code>}</code>
+		<code>}</code>
+	</pre>
+</section>
+
+<section class="slide">
+	<h2>DragSource HOC</h2>
+	<pre>
+		<code>const DragCard = ReactDnD.DragSource('Card',</code>
+		<code>  {  beginDrag(props) { return { id: props.cardId };	}, },</code>
+		<code>  (connect, monitor) => ({</code>
+		<code>	  connectDragSource: connect.dragSource(),</code>
+		<code>    isDragging: monitor.isDragging()</code>
+		<code>  }))(Card);</code>
+	</pre>
+</section>
+
+<section class="slide">
+	<h2>DropTarget HOC</h2>
+	<pre>
+		<code>const DragAndDropCard = ReactDnD.DropTarget('Card',</code>
+		<code>{	drop({ switchCards, cardId }, { getItem }) {</code>
+		<code>		switchCards({ droppedId: getItem().id, placeholderId: cardId }); },</code>
+		<code>	canDrop() { return true }, },</code>
+		<code>(connect, monitor) => ({</code>
+		<code>	connectDropTarget: connect.dropTarget(),</code>
+		<code>	isOver: monitor.isOver(),</code>
+		<code>	isOverCurrent: monitor.isOver({ shallow: true }),</code>
+		<code>	canDrop: monitor.canDrop(),</code>
+		<code>	itemType: monitor.getItemType()</code>
+		<code>}),</code>
+	<code>)(DragCard);</code>
+	</pre>
+</section>
+
+<section class="slide">
+	<h2>React-DnD naive implementation</h2>
+	<a target="_blank" href="frames/8-user-plain-react-dnd.html">In new tab</a>
+	<iframe frameboder="1px" width="100%" height="60%" src="frames/8-user-plain-react-dnd.html"></iframe>
+</section>
+
+<section class="slide">
+	<h2>Issues</h2>
+	<ul>
+		<li>No animations for drag and drop</li>
+		<li>Works worth on iOS</li>
+	</ul>
+	<p class="next">Lets try to fix them</p>
+</section>
+
+<section class="slide">
+	<h2>React-DnD offers to use DragLayer</h2>
+    <ul>
+		<li>Documentation is poor for this part of react-dnd.</li>
+		<li>We need to render it at the application's root.</li>
+		<li>It's difficult to render real components there.</li>
+		<li>It's veeeeeery slow</li>
+	</ul>
+</section>
+
+<section class="slide">
+	<h2>React-DnD Drag layer example</h2>
+	<a target="_blank" href="frames/9-react-dnd-with-drag-layer.html">In new tab</a>
+	<iframe frameboder="1px" width="100%" height="60%" src="frames/9-react-dnd-with-drag-layer.html"></iframe>
+</section>
+
+<section class="slide">
+	<h2 class="shout">2 previews?</h2>
+</section>
+
+<section class="slide">
+	<h2>Improve styling</h2>
+	<ul>
+		<li>To remove preview we need to use image 1x1px.</li>
+		<li>User usually will not see it cause of cursor.</li>
+	</ul>
+</section>
+
+<section class="slide">
+	<h2>Improve styling (code)</h2>
+	<pre>
+		<code>class Card extends React.PureComponent {</code>
+    	<code>	componentDidMount() {</code>
+		<code>		this.props.connectDragPreview(</code>
+		<code>        ReactDnDHTML5Backend.getEmptyImage()</code>
+		<code>    );</code>
+		<code>  }</code>
+	</pre>
+	<h2 class="next shout shrink">A bit later ... WTF??</h2>
+</section>
+
+<section class="slide">
+	<h2>React-DnD Drag layer without original preview</h2>
+	<a target="_blank" href="frames/10-try-to-improve-dnd-layer.html">In new tab</a>
+	<iframe frameboder="1px" width="100%" height="60%" src="frames/10-try-to-improve-dnd-layer.html"></iframe>
+</section>
+
+<section class="slide">
+	<h2 class="shout">Lets use <code>sCU</code></h2>
+</section>
+
+<section class="slide">
+	<pre style="font-size:0.75em">
+	<code>shouldComponentUpdate(nextProps) {</code>
+    <code>  if (!nextProps.isDragging) {</code>
+    <code>    return this.props.isDragging;</code>
+	<code>  } else if (!this.props.currentOffset) {</code>
+    <code>    return true;</code>
+    <code>  } else if (!nextProps.currentOffset) {</code>
+    <code>    return true;</code>
+    <code>  } else if (nextProps.currentOffset.x !== this.props.currentOffset.x) {</code>
+    <code>    return true;</code>
+	<code>  } else if (nextProps.currentOffset.y !== this.props.currentOffset.y) {</code>
+	<code>    return true;</code>
+	<code>  }</code>
+    <code>  return false;</code>
+    <code>}</code>
+	</pre>
+</section>
+
+<section class="slide">
+	<h2>Result</h2>
+	<a target="_blank" href="frames/11-add-should-component-update.html">In new tab</a>
+	<iframe frameboder="1px" width="100%" height="60%" src="frames/11-add-should-component-update.html"></iframe>
+</section>
+
+<section class="slide">
+	<h2>Position fix</h2>
+	<pre style="font-size:0.5em">
+	    <code>componentDidUpdate(oldProps) {</code>
+		<code>  if (this.props.currentOffset) {</code>
+		<code>    if (!this.initialDiff) {</code>
+		<code>      this.initialDiff = {</code>
+		<code>        count: 0,</code>
+		<code>        x: this.props.currentOffset.x - this.props.initialOffset.x,</code>
+		<code>        y: this.props.currentOffset.y - this.props.initialOffset.y,</code>
+		<code>      };</code>
+		<code>    } else if (this.initialDiff.count === 0) {</code>
+		<code>      this.initialDiff.count = 1;</code>
+		<code>      this.initialDiff.x = this.props.currentOffset.x - this.props.initialOffset.x;</code>
+		<code>        this.initialDiff.y = this.props.currentOffset.y - this.props.initialOffset.y;</code>
+		<code>    }</code>
+		<code>  } else if (!this.props.currentOffset) {</code>
+		<code>    this.initialDiff = null;</code>
+		<code>  }</code>
+		<code>}</code>
+	</pre>
+</section>
+
+<section class="slide">
+	<h2>Position fix (second part)</h2>
+	<pre style="font-size:0.5em">
+		<code>function getCurrentOffset(initialOffset, clientOffset, diff) {</code>
+		<code>	if (!initialOffset) return null;</code>
+		<code>	if (!clientOffset) return null;</code>
+		<code> </code>
+		<code>	if (!diff) return {</code>
+		<code>	  x: initialOffset.x,</code>
+		<code>	  y: initialOffset.y,</code>
+		<code>	};</code>
+		<code> </code>
+		<code>	return {</code>
+		<code>	  x: clientOffset.x - diff.x,</code>
+		<code>	  y: clientOffset.y - diff.y,</code>
+		<code>	}</code>
+		<code>}</code>
+	</pre>
+</section>
+
+<section class="slide">
+	<h2>Result</h2>
+	<a target="_blank" href="frames/11.1-add-position-fix.html">In new tab</a>
+	<iframe frameboder="1px" width="100%" height="60%" src="frames/11.1-add-position-fix.html"></iframe>
+</section>
+
+<section class="slide">
+	<h2>The best implementation</h2>
+	<ul>
+		<li>Remove all code that use HTML5Backend to draw preview.</li>
+		<li>But we need preview...</li>
+		<li>Change it to draw custom preview only in case of called <code>connectDragPreview</code>.</li>
+		<li>Perfect work on every browser that implements html5-drag-and-drop.</li>
+		<li>But not on Mac in Safari.</li>
+	</ul>
+</section>
+
+<section class="slide">
+	<h2 class="shout shrink">Thanks<br>Questions?</h2>
+</section>
+
+<footer class="badge">
+	<a href="https://github.com/shower/shower">Fork me on GitHub</a>
+</footer>
+
+<div class="progress"></div>
+
+<script src="shower/shower.min.js"></script>
+<!-- Copyright © 2018 Yours Truly, Famous Inc. -->
+
+</body>
+</html>
