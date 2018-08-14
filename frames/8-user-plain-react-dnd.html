@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>8. Use plain react-dnd</title>
+	<style>
+		/* Prevent the text contents of draggable elements from being selectable. */
+		[draggable] {
+			-moz-user-select: none;
+			-khtml-user-select: none;
+			-webkit-user-select: none;
+			user-select: none;
+			/* Required to make elements draggable in old WebKit */
+			-khtml-user-drag: element;
+			-webkit-user-drag: element;
+		}
+		.column {
+			height: 150px;
+			width: 150px;
+			float: left;
+			border: 2px solid #666666;
+			background-color: #ccc;
+			margin-right: 5px;
+			-webkit-border-radius: 10px;
+			-ms-border-radius: 10px;
+			-moz-border-radius: 10px;
+			border-radius: 10px;
+			-webkit-box-shadow: inset 0 0 3px #000;
+			-ms-box-shadow: inset 0 0 3px #000;
+			box-shadow: inset 0 0 3px #000;
+			text-align: center;
+			cursor: move;
+		}
+		.column header {
+			color: #fff;
+			text-shadow: #000 0 1px;
+			box-shadow: 5px;
+			padding: 5px;
+			background: -moz-linear-gradient(left center, rgb(0,0,0), rgb(79,79,79), rgb(21,21,21));
+			background: -webkit-gradient(linear, left top, right top,
+			color-stop(0, rgb(0,0,0)),
+			color-stop(0.50, rgb(79,79,79)),
+			color-stop(1, rgb(21,21,21)));
+			background: -webkit-linear-gradient(left center, rgb(0,0,0), rgb(79,79,79), rgb(21,21,21));
+			background: -ms-linear-gradient(left center, rgb(0,0,0), rgb(79,79,79), rgb(21,21,21));
+			border-bottom: 1px solid #ddd;
+			-webkit-border-top-left-radius: 10px;
+			-moz-border-radius-topleft: 10px;
+			-ms-border-radius-topleft: 10px;
+			border-top-left-radius: 10px;
+			-webkit-border-top-right-radius: 10px;
+			-ms-border-top-right-radius: 10px;
+			-moz-border-radius-topright: 10px;
+			border-top-right-radius: 10px;
+		}
+		.column.over {
+			border: 2px dashed #000;
+		}
+		#columns::after {
+			content: "";
+			display: table;
+			clear: both;
+		}
+	</style>
+	<script src="script-button.js" defer></script>
+	<script src="logger.js" defer></script>
+</head>
+<body>
+
+<div id="app"> </div>
+
+<script crossorigin src="https://unpkg.com/react@16.4.2/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@16.4.2/umd/react-dom.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dnd@latest/dist/ReactDnD.js"></script>
+<script crossorigin src="https://unpkg.com/react-dnd-html5-backend@latest/dist/ReactDnDHTML5Backend.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.25.0/babel.min.js"></script>
+
+<script type="text/babel">
+	class Card extends React.Component {
+		render() {
+			const { children, connectDropTarget, connectDragSource } = this.props;
+
+			return connectDragSource(
+				connectDropTarget(
+					<div className="column"><header><a href="/">{children}</a></header></div>
+				)
+			);
+		}
+	}
+
+
+	const DragCard = ReactDnD.DragSource('Card',
+		{
+			beginDrag(props) {
+				return { id: props.cardId };
+			},
+		},
+		(connect, monitor) => ({
+			connectDragSource: connect.dragSource(),
+			isDragging: monitor.isDragging()
+		}),
+	)(Card);
+
+
+	const DragAndDropCard = ReactDnD.DropTarget('Card',
+		{
+			drop(props, monitor) {
+				props.switchCards({ droppedId: monitor.getItem().id, placeholderId: props.cardId });
+			},
+			canDrop() { return true },
+		},
+		(connect, monitor) => ({
+			connectDropTarget: connect.dropTarget(),
+			isOver: monitor.isOver(),
+			isOverCurrent: monitor.isOver({ shallow: true }),
+			canDrop: monitor.canDrop(),
+			itemType: monitor.getItemType()
+		}),
+	)(DragCard);
+
+
+	class Cards extends React.Component {
+		state = { cards: ['A', 'B', 'C'] };
+
+		switchCards = ({ droppedId, placeholderId }) => {
+			this.setState(({ cards }) => {
+				const indexOfPlaceholder = cards.indexOf(placeholderId);
+				const indexOfDropped = cards.indexOf(droppedId);
+
+				return {
+					cards: cards.map((card, index) => {
+						if (index === indexOfPlaceholder) return droppedId;
+						else if (index === indexOfDropped) return placeholderId;
+						return card;
+					}),
+				};
+			})
+		};
+
+		render() {
+			return <div id="columns">
+				{
+					this.state.cards.map(
+						card => <DragAndDropCard key={card} cardId={card} switchCards={this.switchCards}>{card}</DragAndDropCard>
+					)
+				}
+			</div>;
+		}
+	}
+	ReactDOM.render(
+		<ReactDnD.DragDropContextProvider backend={ReactDnDHTML5Backend.default}>
+			<Cards/>
+		</ReactDnD.DragDropContextProvider>,
+		document.getElementById("app")
+	)
+</script>
+
+</html>
+
+
